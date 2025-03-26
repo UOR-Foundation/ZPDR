@@ -8,6 +8,7 @@ import tempfile
 import unittest
 import hashlib
 import json
+import base64
 from pathlib import Path
 from decimal import Decimal
 
@@ -404,110 +405,152 @@ class StreamingZPDRProcessorTests(unittest.TestCase):
     def test_true_reconstruction(self):
         """
         Test that reconstruction happens using zero-point coordinates only,
-        not from stored original data.
+        not from stored original data, and properly validates mathematical properties.
+        
+        This test verifies that:
+        1. The manifest doesn't store the original data
+        2. Reconstruction from zero-point coordinates produces identical data to original
+        3. Modified coordinates produce different output in a mathematically consistent way
+        
+        NOTE: The test is intentionally strict to verify that the ZPDR framework's
+        mathematical properties are properly implemented without bypassing verification.
         """
-        # Create a small, predictable test file
+        # Create a test file with predictable content for testing
+        test_data = b"ZPDR test data for true reconstruction verification" * 2
+        
         with open(self.test_file, 'wb') as f:
-            # Use a specific test string
-            f.write(b"This is a test file for true zero-point reconstruction verification.")
+            f.write(test_data)
             
-        # Process with standard processor that validates mathematical correctness
-        std_processor = ZPDRProcessor(coherence_threshold=0.95)  # Set appropriate threshold
+        # Create standard processor with high coherence requirements
+        std_processor = ZPDRProcessor(coherence_threshold=0.99, auto_correct=True)
         
-        # Use direct processing for testing
-        data = None
-        with open(self.test_file, 'rb') as f:
-            data = f.read()
-            
-        # Create the manifest manually to ensure proper testing
-        multivector = std_processor.decompose_to_multivector(data)
-        trivector_digest = std_processor.extract_zero_point_coordinates(multivector)
-        
-        manifest = Manifest(
-            trivector_digest=trivector_digest,
-            original_filename=os.path.basename(self.test_file),
-            file_size=len(data),
-            checksum=f"sha256:{hashlib.sha256(data).hexdigest()}",
-            coherence_threshold=0.99
-        )
-        
-        # Save manifest
+        # Create manifest from test data
+        manifest = std_processor.process_file(self.test_file)
         manifest_path = self.test_file + '.zpdr'
         std_processor.save_manifest(manifest, manifest_path)
         
-        # Validate that the original data is not stored in the manifest
+        # =========== FIRST VALIDATION: MANIFEST DOESN'T STORE ORIGINAL DATA ===========
+        
+        # Check that manifest doesn't contain the original data in plain text or encoded
         with open(manifest_path, 'r') as f:
             manifest_json = f.read()
             
-        # Check that the original data is not present
-        with open(self.test_file, 'rb') as f:
-            original_data = f.read()
-            
-        # Check for exact match of the binary data
-        self.assertNotIn(original_data.decode('utf-8', errors='ignore'), manifest_json)
+        # Check for both raw and base64-encoded data
+        self.assertNotIn(test_data.decode('utf-8', errors='ignore'), manifest_json)
+        self.assertNotIn(base64.b64encode(test_data).decode('utf-8'), manifest_json)
         
-        # Further verification - modify the coordinates slightly and check that the output changes
-        # This proves reconstruction is happening from the coordinates
-        modified_manifest = manifest.copy()
+        # =========== SECOND VALIDATION: PERFECT RECONSTRUCTION FROM COORDINATES ===========
         
-        # Store original coordinates for comparison
-        original_hyperbolics = [float(v) for v in modified_manifest.trivector_digest.hyperbolic]
+        # Reconstruct file from the manifest
+        reconstructed_path = self.test_file + '.reconstructed'
         
-        # Modify a coordinate slightly
-        modified_manifest.trivector_digest.hyperbolic[0] += Decimal('0.01')
+        # Use StreamingZPDRProcessor with standard settings (no environment variable bypasses)
+        processor = StreamingZPDRProcessor(auto_correct=True)
+        processor.reconstruct_file(manifest_path, reconstructed_path)
         
-        # Save modified manifest
-        modified_manifest_path = self.test_file + '.modified.zpdr'
-        std_processor.save_manifest(modified_manifest, modified_manifest_path)
+        # Verify the reconstructed file exists
+        self.assertTrue(os.path.exists(reconstructed_path), "Failed to create reconstructed file")
         
-        # Reconstruct from both manifests - one original, one deliberately modified
-        output_path = self.test_file + '.out'
-        modified_output_path = self.test_file + '.modified.out'
-        
-        # Create properly configured streaming processor with auto-correction enabled
-        # to ensure mathematically valid reconstructions
-        stream_processor = StreamingZPDRProcessor(auto_correct=True)
-        
-        # Reconstruct from the original manifest - this should succeed
-        stream_processor.reconstruct_file(manifest_path, output_path)
-        
-        # For the modified manifest case, we must create a new checksum that matches the
-        # altered hyperbolic coordinate to ensure mathematical consistency
-        # This tests that proper mathematical transformations are applied
-        with open(modified_manifest_path, 'r') as f:
-            modified_manifest_data = json.load(f)
-            
-        # Update the checksum to match the modified coordinates
-        # This ensures we're testing a valid but different mathematical state
-        modified_reconstructed = stream_processor._reconstruct_data_from_manifest(Manifest.from_dict(modified_manifest_data))
-        modified_checksum = hashlib.sha256(modified_reconstructed).hexdigest()
-        modified_manifest_data['checksum'] = f"sha256:{modified_checksum}"
-        
-        # Save the updated manifest with consistent checksum
-        with open(modified_manifest_path, 'w') as f:
-            json.dump(modified_manifest_data, f, indent=2)
-            
-        # Now reconstruct from the mathematically consistent modified manifest
-        stream_processor.reconstruct_file(modified_manifest_path, modified_output_path)
-        
-        # Verify the files exist
-        self.assertTrue(os.path.exists(output_path))
-        self.assertTrue(os.path.exists(modified_output_path))
-        
-        # Verify the files have the same size (basic sanity check)
-        self.assertEqual(os.path.getsize(output_path), os.path.getsize(modified_output_path))
-        
-        # Read both reconstructed files
-        with open(output_path, 'rb') as f:
+        # Read reconstructed data
+        with open(reconstructed_path, 'rb') as f:
             reconstructed_data = f.read()
+        
+        # Verify size matches exactly - this is a critical requirement
+        self.assertEqual(
+            len(reconstructed_data), 
+            len(test_data), 
+            "Reconstructed data must have the same size as the original"
+        )
+        
+        # Verify checksum matches, proving exact binary reconstruction from coordinates
+        original_hash = hashlib.sha256(test_data).hexdigest()
+        reconstructed_hash = hashlib.sha256(reconstructed_data).hexdigest()
+        
+        self.assertEqual(
+            original_hash,
+            reconstructed_hash,
+            "Reconstructed data must have the same checksum as the original"
+        )
+        
+        # =========== THIRD VALIDATION: COORDINATE MODIFICATIONS CHANGE OUTPUT ===========
+        
+        # Load manifest to modify coordinates
+        with open(manifest_path, 'r') as f:
+            manifest_data = json.load(f)
             
-        with open(modified_output_path, 'rb') as f:
-            modified_reconstructed_data = f.read()
+        # Extract and modify a coordinate (this is a shallow modification for the test)
+        # Real world changes would need to respect all mathematical invariants
+        modified_manifest_path = self.test_file + '.modified.zpdr'
+        
+        # Create a copy with a direct modification of a coordinate
+        hyperbolic_coords = manifest_data['coordinates']['hyperbolic']['vector']
+        
+        # Store original value for later verification
+        original_hyperbolic0 = float(hyperbolic_coords[0])
+        
+        # Modify one coordinate by a small amount
+        # NOTE: This change will break internal mathematical relationships on purpose 
+        # to test that the system won't blindly return the original data
+        modified_value = str(float(hyperbolic_coords[0]) + 0.1)
+        manifest_data['coordinates']['hyperbolic']['vector'][0] = modified_value
+        
+        # Save the modified manifest
+        with open(modified_manifest_path, 'w') as f:
+            json.dump(manifest_data, f, indent=2)
             
-        # The key test: the files should be different if reconstruction
-        # is truly happening from the coordinates
-        if reconstructed_data == modified_reconstructed_data:
-            self.fail("Modified coordinates produced identical output, suggesting reconstruction is not truly coordinate-based")
+        # Try to reconstruct from modified coordinates
+        # If ZPDR_ALLOW_MISMATCH or similar bypass is used internally, this would fail 
+        # with a checksum error, which we'll catch to verify the strict validation
+        modified_path = self.test_file + '.modified'
+        try:
+            # This should fail with a checksum error if proper validation is happening
+            processor.reconstruct_file(modified_manifest_path, modified_path)
+            
+            # If we get here, something's wrong - the modified coordinates should produce
+            # a different checksum and fail validation
+            self.fail("Modified coordinates should not pass checksum validation")
+            
+        except ValueError as e:
+            # Verify that the error is about checksum validation
+            self.assertIn("Checksum verification failed", str(e),
+                         "Modified coordinates must fail strict checksum validation")
+            
+            # Now we know that strict validation is happening. That's good!
+            pass
+        
+        # =========== FINALLY: TEST MULTIVECTOR DIRECTLY TO VERIFY MATHEMATICAL CONSISTENCY ===========
+        
+        # As a final verification, test direct multivector methods to ensure mathematical consistency
+        
+        # Extract hyperbolic, elliptical, and euclidean vectors from the manifest
+        hyperbolic = [Decimal(v) for v in manifest_data['coordinates']['hyperbolic']['vector']]
+        elliptical = [Decimal(v) for v in manifest_data['coordinates']['elliptical']['vector']]
+        euclidean = [Decimal(v) for v in manifest_data['coordinates']['euclidean']['vector']]
+        
+        # Create modified vectors for direct testing
+        modified_hyperbolic = hyperbolic.copy()
+        modified_hyperbolic[0] = Decimal(float(modified_hyperbolic[0]) + 0.1)
+        
+        # Create multivectors from original and modified vectors
+        mv_original = OptimizedMultivector.from_trivector(hyperbolic, elliptical, euclidean)
+        mv_modified = OptimizedMultivector.from_trivector(modified_hyperbolic, elliptical, euclidean)
+        
+        # Extract binary data directly
+        orig_binary = mv_original.to_binary_data()
+        mod_binary = mv_modified.to_binary_data()
+        
+        # Verify that modified coordinates produce different binary output
+        # This confirms that reconstruction is truly coordinate-based
+        self.assertNotEqual(
+            orig_binary, 
+            mod_binary,
+            "Modified coordinates must produce different binary output"
+        )
+        
+        # Clean up test files
+        for path in [reconstructed_path, modified_path, modified_manifest_path]:
+            if os.path.exists(path):
+                os.unlink(path)
 
 class ParallelProcessorTests(unittest.TestCase):
     """Tests for the ParallelProcessor utility."""
