@@ -1,0 +1,16 @@
+LICENSE
+setup.py
+zpdr/__init__.py
+zpdr.egg-info/PKG-INFO
+zpdr.egg-info/SOURCES.txt
+zpdr.egg-info/dependency_links.txt
+zpdr.egg-info/requires.txt
+zpdr.egg-info/top_level.txt
+zpdr/core/__init__.py
+zpdr/core/geometric_spaces.py
+zpdr/core/multivector.py
+zpdr/examples/__init__.py
+zpdr/examples/basic_example.py
+zpdr/tests/__init__.py
+zpdr/tests/test_basic.py
+zpdr/utils/__init__.py
