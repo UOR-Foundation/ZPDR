@@ -1,7 +1,8 @@
 # Zero-Point Data Resolution (ZPDR)
 
-[![ZPDR Tests](https://github.com/zpdr/zpdr/actions/workflows/run-tests.yml/badge.svg)](https://github.com/zpdr/zpdr/actions/workflows/run-tests.yml)
-[![ZPDR Basic Tests](https://github.com/zpdr/zpdr/actions/workflows/basic-tests.yml/badge.svg)](https://github.com/zpdr/zpdr/actions/workflows/basic-tests.yml)
+[![ZPDR Tests](https://github.com/zpdr/zpdr/actions/workflows/run-tests.yml/badge.svg?branch=main)](https://github.com/zpdr/zpdr/actions/workflows/run-tests.yml)
+[![ZPDR Basic Tests](https://github.com/zpdr/zpdr/actions/workflows/basic-tests.yml/badge.svg?branch=main)](https://github.com/zpdr/zpdr/actions/workflows/basic-tests.yml)
+[![Python Versions](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10%20%7C%203.11-blue)](https://github.com/zpdr/zpdr)
 
 A mathematical framework for universal data encoding and resolution based on the principles of the Prime Framework.
 
