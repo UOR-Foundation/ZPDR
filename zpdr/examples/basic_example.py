@@ -1,10 +1,38 @@
 """
 Basic example demonstrating the usage of ZPDR core components.
 
-This example shows:
-1. Creating and manipulating multivectors
-2. Working with different geometric spaces
-3. Converting between spaces
+This example provides a practical introduction to the Zero-Point Data Resolution (ZPDR)
+framework by demonstrating its core mathematical components and operations. The example
+is structured to progressively introduce the fundamental concepts of ZPDR:
+
+1. Multivectors and Clifford Algebra:
+   - Creating multivectors with components of different grades
+   - Extracting components by grade (scalar, vector, bivector, trivector)
+   - Performing geometric, inner, and outer products
+   - Understanding the algebraic structure of the fiber algebra
+
+2. Geometric Spaces:
+   - Working with hyperbolic space (negative curvature)
+   - Working with elliptical space (positive curvature)
+   - Working with Euclidean space (zero curvature)
+   - Calculating norms and performing additions in each space
+
+3. Space Transformations:
+   - Converting vectors between different geometric spaces
+   - Understanding how the transformations preserve mathematical relationships
+   - Observing the effects of round-trip transformations
+
+Mathematical Foundation:
+This example demonstrates the practical implementation of the Prime Framework's
+mathematical principles, showing how data can be represented and transformed across
+different geometric spaces while maintaining coherent relationships. The trilateral
+representation system (hyperbolic, elliptical, and Euclidean vectors) forms the
+foundation of ZPDR's robust data encoding capabilities.
+
+Usage:
+Run this script directly to see step-by-step demonstrations of ZPDR components:
+
+    python -m zpdr.examples.basic_example
 """
 
 import numpy as np
@@ -18,7 +46,33 @@ from zpdr.core.geometric_spaces import (
 
 
 def multivector_demo():
-    """Demonstrate basic multivector operations."""
+    """
+    Demonstrate basic multivector operations in the Clifford algebra framework.
+    
+    This function illustrates the fundamental operations of Clifford algebra that
+    form the mathematical foundation of ZPDR's fiber algebra. It demonstrates:
+    
+    1. Creating multivectors with components of various grades:
+       - Grade 0: Scalar (magnitude information)
+       - Grade 1: Vector (directional information)
+       - Grade 2: Bivector (area/rotational information)
+       - Grade 3: Trivector (volume/orientation information)
+       
+    2. Grade projections for extracting specific components of a multivector
+    
+    3. Geometric product operations, showing how:
+       - e1 * e1 = 1 (square of a basis vector is scalar)
+       - e1 * e2 = e12 (product of different basis vectors creates a bivector)
+       - e2 * e1 = -e12 (geometric product is anti-commutative for vector terms)
+       
+    4. Inner and outer products, demonstrating:
+       - Inner product: Contracts grades and gives a lower-grade result
+       - Outer product: Expands grades and gives a higher-grade result
+       
+    These operations demonstrate how the Clifford algebra structure enables
+    ZPDR to represent mathematical objects across multiple geometric spaces
+    simultaneously and perform coherent transformations between them.
+    """
     print("\n=== Multivector Demonstration ===")
     
     # Create a general multivector with components of different grades
@@ -64,7 +118,36 @@ def multivector_demo():
 
 
 def geometric_spaces_demo():
-    """Demonstrate operations in different geometric spaces."""
+    """
+    Demonstrate operations in the three geometric spaces used in ZPDR.
+    
+    This function illustrates how ZPDR operates in three complementary geometric
+    spaces, each with different curvature properties:
+    
+    1. Hyperbolic Space (negative curvature):
+       - Represented by the Poincaré disk model
+       - Used in ZPDR to capture base transformation systems
+       - Points must lie within the unit disk (|v| < 1)
+       - Special addition operation using Möbius transformation
+    
+    2. Elliptical Space (positive curvature):
+       - Represented by points on the unit sphere
+       - Used in ZPDR to capture transformation spans
+       - All points have unit norm (|v| = 1)
+       - Addition involves Euclidean addition followed by normalization
+    
+    3. Euclidean Space (zero/flat curvature):
+       - Conventional vector space with standard operations
+       - Used in ZPDR to capture the transformed object itself
+       - No constraints on vector magnitudes
+       - Standard vector addition
+    
+    The demonstration shows how vectors in each space have different properties
+    and behaviors, particularly with respect to norms and addition operations.
+    These distinct properties enable ZPDR to represent mathematical objects
+    in a robust trilateral system that provides inherent error detection and
+    correction capabilities through the maintained relationships between spaces.
+    """
     print("\n=== Geometric Spaces Demonstration ===")
     
     # Create vectors in each space
@@ -98,7 +181,40 @@ def geometric_spaces_demo():
 
 
 def space_transformations_demo():
-    """Demonstrate transformations between geometric spaces."""
+    """
+    Demonstrate transformations between the three geometric spaces in ZPDR.
+    
+    This function illustrates how vectors can be transformed between hyperbolic,
+    elliptical, and Euclidean spaces while preserving their essential geometric
+    properties. These transformations are a key component of ZPDR's ability to
+    maintain coherent relationships across different spaces.
+    
+    The demonstration shows:
+    
+    1. Euclidean to Hyperbolic: 
+       - Projects Euclidean vectors into the Poincaré disk model
+       - Preserves direction while adjusting magnitude to fit within unit disk
+       - Essential for creating the H component of the ZPA triple
+       
+    2. Euclidean to Elliptical:
+       - Projects Euclidean vectors onto the unit sphere
+       - Preserves direction while normalizing to unit length
+       - Essential for creating the E component of the ZPA triple
+       
+    3. Round-Trip Transformations:
+       - Hyperbolic → Euclidean → Hyperbolic
+       - Elliptical → Euclidean → Elliptical
+       - Shows how information is preserved through space transformations
+       
+    4. Direct Transformations:
+       - Hyperbolic ↔ Elliptical (usually via Euclidean space)
+       - Demonstrates the relationships between negative and positive curvature spaces
+    
+    These transformations implement the fiber bundle connections described in the
+    Prime Framework, linking different geometric spaces in a coherent mathematical
+    structure. The SpaceTransformer ensures these transformations maintain the
+    geometric invariants necessary for zero-point normalization and data reconstruction.
+    """
     print("\n=== Space Transformations Demonstration ===")
     
     # Create initial vectors
@@ -128,7 +244,28 @@ def space_transformations_demo():
 
 
 def main():
-    """Run all demonstrations."""
+    """
+    Run all ZPDR basic demonstrations in a structured sequence.
+    
+    This function executes the three main demonstrations of ZPDR components:
+    
+    1. Multivector operations (Clifford algebra foundation)
+    2. Geometric spaces (hyperbolic, elliptical, and Euclidean)
+    3. Space transformations (conversions between different spaces)
+    
+    The demonstrations progress from foundational mathematical concepts to
+    more advanced operations, providing a comprehensive introduction to the
+    core components of the ZPDR framework.
+    
+    This structured approach helps users understand:
+    - The mathematical building blocks of ZPDR
+    - How these components interact in a coherent system
+    - The practical implementation of Prime Framework principles
+    
+    By running this example, users can observe the behavior of ZPDR components
+    in action and gain insights into how the framework represents and transforms
+    data across different geometric spaces.
+    """
     print("Zero-Point Data Resolution (ZPDR) Basic Example")
     print("===============================================")
     
