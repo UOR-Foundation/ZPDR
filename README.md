@@ -1,5 +1,8 @@
 # Zero-Point Data Resolution (ZPDR)
 
+[![ZPDR Tests](https://github.com/zpdr/zpdr/actions/workflows/run-tests.yml/badge.svg)](https://github.com/zpdr/zpdr/actions/workflows/run-tests.yml)
+[![ZPDR Basic Tests](https://github.com/zpdr/zpdr/actions/workflows/basic-tests.yml/badge.svg)](https://github.com/zpdr/zpdr/actions/workflows/basic-tests.yml)
+
 A mathematical framework for universal data encoding and resolution based on the principles of the Prime Framework.
 
 ## Description
@@ -94,27 +97,50 @@ The project is being implemented in phases:
   - Mathematical spaces (hyperbolic, elliptical, Euclidean)
   - Basic transformations between spaces
 
-- [ ] **Phase 2**: Basic ZPDR Operations
+- [x] **Phase 2**: Basic ZPDR Operations
   - Multivector data encoding
   - ZPA extraction algorithms
   - Basic coherence calculations
   - Simple serialization format
 
-- [ ] **Phase 3**: Full Pipeline
+- [x] **Phase 3**: Full Pipeline
   - Complete encoding/decoding pipeline
   - Verification mechanisms
   - Error correction
   - Performance optimization
 
-- [ ] **Phase 4**: Examples and Documentation
+- [x] **Phase 4**: Examples and Documentation
   - Example applications
   - Comprehensive documentation
-  - Complete test suite
-  - Benchmarking
+  - API reference documentation
+  - Interactive Jupyter notebooks
+  - Continuous integration testing
 
-## Learn More
+## Documentation
 
-For more information on the theoretical foundation of ZPDR, see [Pure-ZPDR.md](Pure-ZPDR.md).
+For a comprehensive reference of the ZPDR framework, see:
+
+- [API Reference](API_REFERENCE.md) - Complete documentation of classes, methods, and functions
+- [Pure-ZPDR.md](Pure-ZPDR.md) - Theoretical foundation of the ZPDR framework
+- [Jupyter Notebooks](notebooks/) - Interactive examples and tutorials
+
+## Testing
+
+The ZPDR framework includes a comprehensive test suite that validates the mathematical principles and functionality of the implementation. To run the tests:
+
+```bash
+# Run all tests
+pytest zpdr/tests/
+
+# Run specific test modules
+pytest zpdr/tests/test_basic.py
+pytest zpdr/tests/test_zpdr_trilateral_extraction.py
+
+# Run tests with coverage
+pytest --cov=zpdr zpdr/tests/
+```
+
+The GitHub Actions workflows automatically run these tests on multiple Python versions to ensure compatibility and correctness.
 
 ## License
 

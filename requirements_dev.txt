@@ -1,0 +1,14 @@
+pip>=21.0
+wheel>=0.37.0
+watchdog>=2.1.0
+flake8>=5.0
+tox>=3.24
+pytest>=7.0
+pytest-cov>=4.0
+mypy>=0.910
+numpy>=1.20.0
+matplotlib>=3.5.0
+scipy>=1.7.0
+decimal-python>=1.0
+jupyter>=1.0.0
+ipykernel>=6.15.0
