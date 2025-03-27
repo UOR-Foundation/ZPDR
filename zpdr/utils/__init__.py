@@ -222,6 +222,10 @@ def validate_trilateral_coherence(triple: ZPDRTriple) -> Tuple[bool, Decimal]:
     """
     Validate trilateral coherence of a ZPDR triple.
     
+    This function calculates coherence measures for the H, E, U components
+    and determines if they form a coherent triple according to the ZPDR
+    coherence threshold.
+    
     Args:
         triple: Tuple of (H, E, U) vectors
         
