@@ -8,6 +8,36 @@ This module implements the three essential geometric spaces used in ZPDR:
 
 It also provides transformations between these spaces, forming the foundation
 for the ZPA (Zero-Point Address) extraction and reconstruction.
+
+Mathematical Foundation:
+The ZPDR framework is built on the Prime Framework's principle of representing
+data across three complementary geometric spaces, each with different curvature
+properties. This trilateral representation enables robust data encoding with
+inherent error detection and correction capabilities.
+
+Key Components:
+1. Geometric Vectors - Space-specific vector implementations that respect the
+   geometric properties of their respective spaces:
+   - HyperbolicVector: Uses the Poincaré disk model to represent vectors in 
+     negative-curvature space. In ZPDR, hyperbolic vectors capture base 
+     transformation systems.
+   - EllipticalVector: Uses a spherical model to represent vectors in 
+     positive-curvature space. In ZPDR, elliptical vectors capture 
+     transformation spans.
+   - EuclideanVector: Uses standard vector representation in flat space.
+     In ZPDR, Euclidean vectors capture the transformed object itself.
+
+2. SpaceTransformer - Provides methods to convert vectors between the three
+   geometric spaces while preserving their essential properties, enabling the
+   construction of coherent ZPA triples.
+
+Each vector implementation maintains high-precision calculations using Python's
+Decimal type to ensure numerical stability and accuracy, especially important
+for operations near the boundaries of the geometric spaces.
+
+The geometric spaces together implement the fiber structure described in the
+Prime Framework, with each space acting as a fiber bundle over the reference
+manifold, connected through the coherence inner product relationship.
 """
 
 import numpy as np
@@ -39,6 +69,42 @@ class GeometricVector:
     Provides common functionality for all geometric vectors regardless
     of the space they inhabit. Specific space implementations inherit
     from this base class.
+    
+    The GeometricVector class defines the interface and shared functionality for
+    vectors in different geometric spaces (hyperbolic, elliptical, and Euclidean).
+    Each space has its own unique properties related to curvature, distance metrics, 
+    and inner products, but they all share common vector operations.
+    
+    In the ZPDR framework, geometric vectors form the basis of the trilateral
+    representation system. Each type of geometric vector encodes different aspects
+    of the data:
+    
+    1. Hyperbolic vectors (H): Encode the base transformation system in negative-
+       curvature space. These vectors capture fundamental transformational properties
+       and provide a robust basis for error correction.
+       
+    2. Elliptical vectors (E): Encode the transformation span in positive-curvature
+       space. These vectors describe how transformations extend and interact across
+       the geometric domain.
+       
+    3. Euclidean vectors (U): Encode the transformed object in flat space. These
+       vectors represent the direct manifestation of the data in conventional space.
+    
+    All geometric vectors implement high-precision arithmetic using Python's Decimal
+    type to ensure numerical stability, particularly important for operations near
+    the boundaries of non-Euclidean spaces.
+    
+    Key mathematical properties:
+    - Each vector maintains both standard floating-point and high-precision
+      representations
+    - Vectors support operations like addition, scalar multiplication, inner product,
+      normalization, etc.
+    - Each vector type defines its own validity conditions based on the geometric
+      constraints of its space
+    - Each vector type implements invariant extraction for zero-point normalization
+    
+    These properties enable the ZPDR framework to maintain coherence across different
+    geometric spaces and ensure robust data encoding and reconstruction.
     """
     
     def __init__(self, components: List[float], space_type: SpaceType):
@@ -153,6 +219,41 @@ class HyperbolicVector(GeometricVector):
     
     Implements the Poincaré disk model of hyperbolic geometry.
     Hyperbolic vectors in ZPDR are used to capture base transformation systems.
+    
+    The HyperbolicVector class implements vectors in hyperbolic space using the
+    Poincaré disk model, where points are represented within the unit disk in
+    Euclidean space, but with a non-Euclidean metric that gives the space its
+    negative curvature properties.
+    
+    In ZPDR, hyperbolic vectors (H component of the ZPA triple) encode the base
+    transformation system of the data. This negative-curvature space provides
+    several advantages for data representation:
+    
+    1. Exponential Expansion: Hyperbolic space allows exponentially more "room"
+       as one moves toward the boundary of the disk, enabling efficient representation
+       of hierarchical structures and transformational relationships.
+       
+    2. Robust Error Boundaries: The boundary of the Poincaré disk serves as a natural
+       limit that helps contain and detect errors in the encoding process.
+       
+    3. Invariant Properties: Hyperbolic transformations preserve important geometric
+       invariants that can be extracted and used for zero-point normalization.
+       
+    4. Stable Zero-Point: The center of the disk provides a natural, stable zero-point
+       for normalization operations.
+    
+    Mathematical properties of the Poincaré disk model:
+    - Points lie within the unit disk: |v| < 1
+    - The metric becomes singular at the boundary |v| = 1
+    - Geodesics are either diameters of the disk or arcs of circles orthogonal to the boundary
+    - The distance between points increases exponentially as they approach the boundary
+    - Möbius transformations act as isometries (distance-preserving maps)
+    
+    This implementation ensures vectors remain within the unit disk by projecting any
+    out-of-bounds points back to the valid region, uses high-precision arithmetic for
+    boundary calculations, and implements the proper hyperbolic operations (addition,
+    inner product, distance, etc.) according to the mathematical principles of hyperbolic
+    geometry.
     """
     
     def __init__(self, components: List[float]):
@@ -380,6 +481,40 @@ class EllipticalVector(GeometricVector):
     
     Implements a spherical model of elliptical geometry.
     Elliptical vectors in ZPDR are used to capture transformation spans.
+    
+    The EllipticalVector class implements vectors in elliptical space using a
+    spherical model, where points are represented on the surface of a unit sphere
+    in Euclidean space. This representation gives the space its positive curvature
+    properties.
+    
+    In ZPDR, elliptical vectors (E component of the ZPA triple) encode the
+    transformation span of the data. This positive-curvature space provides
+    several advantages for data representation:
+    
+    1. Bounded Domain: Elliptical space is naturally bounded, ensuring that all valid
+       representations have finite extent and uniform coverage properties.
+       
+    2. Rotation Invariants: The spherical model permits natural representation of 
+       rotational invariants, which are essential for stable zero-point normalization.
+       
+    3. Complementary Constraints: The positive curvature constraints complement the
+       negative curvature of hyperbolic space, creating a balanced trilateral system
+       that enhances error detection capabilities.
+       
+    4. Global Connectivity: Unlike hyperbolic space, elliptical space is globally
+       connected, allowing representations to "wrap around" in a coherent manner.
+    
+    Mathematical properties of the spherical model:
+    - Points lie on the unit sphere: |v| = 1
+    - The shortest path between points (geodesic) is the great circle arc
+    - The distance between points is the angle between the corresponding vectors
+    - The total "area" of the space is finite
+    - Rotations act as isometries (distance-preserving maps)
+    
+    This implementation ensures vectors remain on the unit sphere by normalizing them
+    during construction, uses high-precision arithmetic for stable calculations, and
+    implements the proper elliptical operations (addition, inner product, distance, etc.)
+    according to the mathematical principles of elliptical geometry.
     """
     
     def __init__(self, components: List[float]):
@@ -581,6 +716,40 @@ class EuclideanVector(GeometricVector):
     
     Implements standard Euclidean geometry.
     Euclidean vectors in ZPDR are used to capture the transformed object itself.
+    
+    The EuclideanVector class implements vectors in standard Euclidean space,
+    which has zero curvature (flat geometry). This is the most familiar vector
+    space, with the standard dot product and distance metrics.
+    
+    In ZPDR, Euclidean vectors (U component of the ZPA triple) encode the transformed
+    object itself, representing the direct manifestation of the data. This flat-space
+    representation provides several advantages:
+    
+    1. Direct Interpretation: Euclidean space allows for straightforward interpretation
+       of vector components, making it ideal for representing the final transformed data.
+       
+    2. Computational Efficiency: Operations in Euclidean space are computationally
+       efficient and numerically stable, as they don't involve complex metric tensors.
+       
+    3. Complementary Balance: The zero-curvature properties provide a balanced middle
+       ground between the negative curvature of hyperbolic space and the positive
+       curvature of elliptical space, enhancing the overall coherence of the trilateral
+       representation.
+       
+    4. Natural Embedding: Most conventional data already exists in Euclidean space,
+       making this representation a natural choice for capturing the transformed object.
+    
+    Mathematical properties of Euclidean space:
+    - The space extends infinitely in all directions
+    - The shortest path between points is a straight line
+    - The distance between points is given by the standard Euclidean metric
+    - The inner product is the familiar dot product
+    - Parallel lines never intersect
+    - Translations and rotations act as isometries (distance-preserving maps)
+    
+    This implementation provides high-precision arithmetic for vector operations and
+    implements the standard Euclidean operations (addition, inner product, distance, etc.)
+    according to the mathematical principles of Euclidean geometry.
     """
     
     def __init__(self, components: List[float]):
@@ -740,6 +909,39 @@ class SpaceTransformer:
     This class provides methods to transform vectors between hyperbolic,
     elliptical, and Euclidean spaces, enabling the construction of the
     Zero-Point Address (ZPA) triple.
+    
+    The SpaceTransformer is a critical component of the ZPDR framework that
+    implements the fiber bundle connections between the three geometric spaces.
+    It provides methods to map vectors between spaces while preserving their
+    essential geometric properties and maintaining coherence.
+    
+    In the mathematical foundation of the Prime Framework, these transformations
+    represent the structure-preserving maps that connect the different fibers
+    over the reference manifold. The consistent relationships maintained by these
+    transformations are what give ZPDR its robust error-detection and error-correction
+    capabilities.
+    
+    Key transformation types:
+    
+    1. Hyperbolic ↔ Euclidean: Maps between the Poincaré disk model and standard
+       Euclidean space, preserving important invariants like relative positions and
+       distances after accounting for the different metrics.
+       
+    2. Elliptical ↔ Euclidean: Maps between the unit sphere model and standard
+       Euclidean space, typically through radial projection that preserves angular
+       relationships.
+       
+    3. Hyperbolic ↔ Elliptical: Typically performed via Euclidean space as an
+       intermediate step, these transformations connect the negative and positive
+       curvature spaces in a coherent manner.
+    
+    The transformations implement the appropriate mathematical operations to ensure
+    the transformed vectors remain valid in their destination spaces and maintain
+    the geometric relationships required for coherent ZPDR triples.
+    
+    These transformations, combined with the invariant extraction and normalization
+    procedures in each vector class, enable the construction of normalized ZPA triples
+    that form the foundation of ZPDR's data encoding and reconstruction capabilities.
     """
     
     @staticmethod

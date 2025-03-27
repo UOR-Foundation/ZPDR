@@ -2,6 +2,44 @@
 Utility modules for Zero-Point Data Resolution (ZPDR) framework.
 
 This package contains utilities supporting the ZPDR core functionality.
+
+The utilities in this module provide essential support functions for the ZPDR framework,
+including high-precision arithmetic, coherence calculations, and data transformation
+utilities. These functions implement critical mathematical operations required for
+maintaining the coherence and integrity of the ZPDR trilateral representation system.
+
+Key components include:
+
+1. High-Precision Calculations:
+   - Decimal-based arithmetic for stable operations near boundaries of geometric spaces
+   - Precision thresholds and tolerances for numerical stability
+   - Type conversions between numpy arrays and Decimal objects
+
+2. Coherence Measures:
+   - Internal coherence calculations for individual vectors
+   - Cross-coherence calculations between vector pairs
+   - Global coherence computation for complete trilateral systems
+   - Coherence validation and thresholding
+
+3. Base Conversion Utilities:
+   - Functions for embedding values in different numerical bases
+   - High-precision reconstruction from base representations
+   - Coherence measures between different base representations
+
+4. Normalization Operations:
+   - Zero-point normalization with invariant extraction
+   - Denormalization for reconstruction of original vectors
+   - Preservation of geometric invariants during normalization
+
+5. ZPDR Encoding/Decoding:
+   - Functions for encoding values to ZPDR triples
+   - Reconstruction of values from ZPDR triples
+   - Multivector creation and extraction utilities
+
+These utilities implement the mathematical principles of the Prime Framework,
+ensuring that operations on ZPDR representations maintain coherence and adhere
+to the geometric constraints of the three spaces (hyperbolic, elliptical, and
+Euclidean) used in the framework.
 """
 
 from decimal import getcontext, Decimal
@@ -23,11 +61,26 @@ def to_decimal_array(vector: VectorData) -> List[Decimal]:
     """
     Convert a numpy array or list of floats to a list of Decimal objects.
     
+    This function is a fundamental building block for high-precision calculations
+    in the ZPDR framework. It converts standard floating-point representations to
+    Python's Decimal type, which provides arbitrary-precision arithmetic necessary
+    for operations near the boundaries of geometric spaces.
+    
+    Precise mathematical operations are essential for:
+    1. Calculations near the boundary of the Poincaré disk (hyperbolic space)
+    2. Maintaining exact unit norm for vectors on the sphere (elliptical space)
+    3. Preserving invariants during geometric transformations
+    4. Ensuring stable coherence calculations
+    
+    The conversion process uses string representation as an intermediate step
+    to avoid floating-point rounding errors that would otherwise be carried
+    into the Decimal representation.
+    
     Args:
-        vector: The vector to convert
+        vector: The vector to convert, either as a numpy array or list of floats
         
     Returns:
-        List of Decimal objects with high precision
+        List of Decimal objects with high precision (set by getcontext().prec)
     """
     return [Decimal(str(x)) for x in vector]
 
@@ -39,16 +92,39 @@ def calculate_internal_coherence(vector: VectorData) -> Decimal:
     to their mathematical structure. Higher coherence indicates better alignment with 
     the expected mathematical properties of the space.
     
-    The coherence is calculated as:
-    1. Normalize the vector to unit length
-    2. Calculate relative dispersion of components from their mean
-    3. Apply non-linear scaling function that maps dispersion to coherence
+    In the Prime Framework, internal coherence represents the "self-consistency" of
+    a vector within its geometric space. It measures how well a vector's components
+    adhere to the expected mathematical structure of its space. This is essential for:
+    
+    1. Detecting Corruption: Vectors that have been corrupted or modified tend to show
+       reduced internal coherence, enabling error detection
+       
+    2. Zero-Point Normalization: Vectors with high internal coherence are more likely
+       to be in their canonical (zero-point) orientation
+       
+    3. Quality Assessment: The internal coherence provides a numerical measure of the
+       quality of a vector representation
+    
+    The coherence calculation implements the following mathematical procedure:
+    
+    1. Normalize the vector to unit length using high-precision arithmetic
+    2. Calculate the deviation of the normalized components from the ideal uniform
+       distribution (representing maximum entropy)
+    3. Apply a non-linear scaling function that maps this deviation to a coherence
+       value in [0,1], where higher values indicate greater coherence
+    4. Apply additional transformations to enhance sensitivity in the high-coherence
+       range, where small deviations are more significant
+    
+    The resulting coherence value is used in both the global coherence calculation
+    and in error detection and correction processes.
     
     Args:
-        vector: Vector to calculate coherence for
+        vector: Vector to calculate coherence for, provided as array-like of numbers
         
     Returns:
-        Decimal representing internal coherence (1.0 is perfect coherence)
+        Decimal representing internal coherence in range [0,1] where:
+        - 1.0 indicates perfect coherence (ideal structure)
+        - 0.0 indicates no coherence (completely randomized structure)
     """
     # Convert to Decimal for high-precision calculations
     dec_vector = to_decimal_array(vector)
@@ -101,17 +177,47 @@ def calculate_cross_coherence(vector1: VectorData, vector2: VectorData) -> Decim
     geometric spaces. Higher cross-coherence indicates stronger mathematical 
     relationships between vectors.
     
-    The cross-coherence is calculated as:
-    1. Normalize both vectors
-    2. Calculate the absolute cosine similarity
-    3. Apply non-linear scaling to enhance differences in high-coherence range
+    In the Prime Framework, cross-coherence represents the consistency of relationships
+    between vectors in different geometric spaces. This is a critical concept that
+    enables the ZPDR framework to maintain integrity across its trilateral
+    representation system. Cross-coherence has several key roles:
+    
+    1. Verification of Transformation Consistency: Cross-coherence ensures that
+       transformations between different geometric spaces maintain their mathematical
+       relationships, validating that a ZPA triple represents a coherent mathematical
+       object.
+       
+    2. Error Detection: When vectors across different spaces should have a specific
+       relationship, deviations in cross-coherence can indicate corruption or errors
+       in one or more of the vectors.
+       
+    3. Reconstruction Guidance: During reconstruction, cross-coherence measures help
+       determine the most probable correct values when some data may be corrupted.
+       
+    4. Fiber Bundle Connection: In terms of the Prime Framework's fiber algebra,
+       cross-coherence implements the connection between different fibers over the
+       reference manifold.
+    
+    The cross-coherence calculation implements the following mathematical procedure:
+    
+    1. Normalize both vectors to unit length using high-precision arithmetic
+    2. Calculate the absolute value of the cosine similarity between the normalized
+       vectors (dot product)
+    3. Apply a non-linear scaling function that enhances sensitivity in the
+       high-coherence range, where small deviations are most significant
+    
+    Cross-coherence is direction-independent (using absolute value of similarity)
+    because in many ZPDR applications, the relationship between vectors matters more
+    than their specific orientations.
     
     Args:
-        vector1: First vector
-        vector2: Second vector
+        vector1: First vector, provided as array-like of numbers
+        vector2: Second vector, provided as array-like of numbers
         
     Returns:
-        Decimal representing cross-coherence (1.0 is perfect coherence)
+        Decimal representing cross-coherence in range [0,1] where:
+        - 1.0 indicates perfect relationship (vectors are perfectly aligned or anti-aligned)
+        - 0.0 indicates no relationship (vectors are orthogonal)
     """
     # Convert to Decimal for high-precision calculations
     dec_vector1 = to_decimal_array(vector1)
@@ -165,12 +271,56 @@ def calculate_global_coherence(
     The weighting system prioritizes internal coherence slightly over cross-coherence,
     reflecting the mathematical importance of consistent internal structure.
     
+    In the Prime Framework, global coherence represents the overall mathematical
+    consistency of a ZPA triple across all its components and relationships. This
+    is a fundamental concept that integrates the various coherence measures into a
+    single metric that can be used for validation, error detection, and quality
+    assessment. Global coherence has several critical applications:
+    
+    1. Validation of ZPA Integrity: The global coherence score serves as the primary
+       metric for determining whether a ZPA triple represents a valid mathematical
+       object according to the Prime Framework principles.
+       
+    2. Error Detection Threshold: By comparing global coherence against the defined
+       threshold (COHERENCE_THRESHOLD), the ZPDR system can detect corrupted or
+       invalid ZPA triples.
+       
+    3. Reconstruction Quality Metric: During reconstruction, global coherence provides
+       a measure of how well the reconstructed data preserves the mathematical
+       relationships of the original data.
+       
+    4. Progressive Error Correction: In error correction processes, changes that
+       increase global coherence are preferred, guiding the system toward more
+       mathematically consistent states.
+    
+    The global coherence calculation implements the following mathematical procedure:
+    
+    1. Combine internal coherences (H, E, U) and cross-coherences (HE, EU, HU) using
+       a weighted average that prioritizes internal coherence
+       
+    2. Apply a non-linear scaling function that creates a sharp transition around the
+       coherence threshold, emphasizing the distinction between coherent and incoherent
+       states
+       
+    3. Use a sigmoid-like function to boost values above the threshold and reduce values
+       below it, creating a clear decision boundary
+    
+    The weighting system reflects the mathematical importance of different components:
+    - Internal coherence of H, E, U components: 20% each (60% total)
+    - Cross-coherence of HE, EU pairs: 15% each (30% total)
+    - Cross-coherence of HU pair: 10% (10% total)
+    
+    These weights are based on the theoretical importance of each relationship in the
+    Prime Framework's fiber bundle structure.
+    
     Args:
         internal_coherences: List of internal coherence values [H, E, U]
         cross_coherences: List of cross coherence values [HE, EU, HU]
         
     Returns:
-        Global coherence as a high-precision Decimal
+        Global coherence as a high-precision Decimal in range [0,1] where:
+        - Values ≥ COHERENCE_THRESHOLD (0.95) indicate a coherent system
+        - Values < COHERENCE_THRESHOLD indicate an incoherent system
     """
     # Validate inputs
     if not internal_coherences or not cross_coherences:

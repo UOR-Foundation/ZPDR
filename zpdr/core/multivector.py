@@ -4,6 +4,32 @@ Multivector Implementation for Zero-Point Data Resolution (ZPDR)
 This module implements the Clifford algebra multivector class serving as the 
 foundation for the ZPDR framework. A multivector is represented as a dictionary
 mapping basis elements to their coefficients.
+
+The multivector implementation follows the mathematical principles of geometric
+algebra (Clifford algebra), which unifies different mathematical systems into a 
+coherent framework. In ZPDR, multivectors form the basis of the fiber algebra 
+described in the Prime Framework.
+
+Key features:
+- Full Clifford algebra implementation with proper geometric product
+- Support for various contractions (inner product, outer product)
+- Proper handling of the geometric algebra grading structure
+- Grade projections for extracting components (scalar, vector, bivector, etc.)
+- Reversions and normalizations for geometric transformations
+
+Mathematical foundation:
+The multivector class implements the algebraic structure required to represent
+transformations across the three geometric spaces (hyperbolic, elliptical, and
+Euclidean) used in ZPDR. The basis elements follow standard geometric algebra
+notation, where:
+- "1" represents the scalar part
+- "e1", "e2", "e3" represent the vector basis elements
+- "e12", "e23", "e31" represent the bivector basis elements
+- "e123" represents the trivector (pseudoscalar) basis element
+
+This implementation focuses on 3D geometric algebra GA(3,0) with a positive
+definite metric, though the structure is designed to be extensible to other
+dimensions and signatures.
 """
 
 import numpy as np
@@ -22,6 +48,35 @@ class Multivector:
     Implements a general multivector in a Clifford algebra, supporting operations
     like addition, geometric product, various contractions, and grade projections.
     Serves as the mathematical foundation for the ZPDR framework's fiber algebra.
+    
+    In ZPDR, multivectors represent mathematical objects across multiple geometric
+    spaces simultaneously. They enable the encoding and transformation of data into
+    the trilateral vector system (H, E, U) that forms the Zero-Point Address (ZPA).
+    
+    The key mathematical properties include:
+    
+    1. Graded Structure: Each multivector is composed of components with different
+       grades (scalar, vector, bivector, trivector), which have distinct geometric
+       interpretations:
+         - Grade 0 (scalar): Magnitude information
+         - Grade 1 (vector): Directional information
+         - Grade 2 (bivector): Rotational/area information
+         - Grade 3 (trivector): Volume/orientation information
+    
+    2. Closure under operations: Multivectors form a closed algebraic system under
+       addition, subtraction, geometric product, etc., enabling complex transformations
+       to be represented and applied.
+    
+    3. Coordinate-free representation: Geometric properties are preserved regardless
+       of the coordinate system, ensuring that ZPDR operations are invariant under
+       rotations, scaling, and other transformations.
+    
+    4. Fiber mapping: Multivectors implement the fiber algebra described in the Prime
+       Framework, establishing connections between different geometric spaces and
+       enabling coherent transformations between them.
+    
+    The implementation is designed for numerical stability and precision, with proper
+    normalization and clean-up procedures to eliminate numerical noise.
     """
     
     def __init__(self, components: Optional[Components] = None):
