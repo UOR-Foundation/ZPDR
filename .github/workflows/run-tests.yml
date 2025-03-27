@@ -1,0 +1,62 @@
+name: ZPDR Tests
+
+on:
+  push:
+    branches: [ main, fix-*, feature-* ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+        cache-dependency-path: 'requirements_dev.txt'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements_dev.txt
+        pip install -e .
+    
+    - name: Run tests with pytest
+      run: |
+        pytest zpdr/tests/ -v --cov=zpdr
+    
+    - name: Generate coverage report
+      run: |
+        pytest --cov=zpdr --cov-report=xml zpdr/tests/
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+        verbose: true
+    
+    - name: Run specific trilateral extraction tests
+      run: |
+        python -m pytest zpdr/tests/test_zpdr_trilateral_extraction.py -v
+    
+    - name: Run specific coherence tests
+      run: |
+        python -m pytest zpdr/tests/test_zpdr_coherence.py -v
+    
+    - name: Run invariant preservation tests
+      run: |
+        python -m pytest zpdr/tests/test_zpdr_invariant_preservation.py -v
+    
+    - name: Run full pipeline tests
+      run: |
+        python -m pytest zpdr/tests/test_zpdr_full_pipeline.py -v

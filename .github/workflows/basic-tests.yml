@@ -1,0 +1,37 @@
+name: ZPDR Basic Tests
+
+on:
+  push:
+    branches: [ main, fix-*, feature-* ]
+    paths:
+      - 'zpdr/**/*.py'
+      - '.github/workflows/basic-tests.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'zpdr/**/*.py'
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  basic-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+        cache-dependency-path: 'requirements_dev.txt'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements_dev.txt
+        pip install -e .
+    
+    - name: Run basic tests
+      run: |
+        python -m pytest zpdr/tests/test_basic.py -v
